@@ -1,9 +1,8 @@
 import app from 'flarum/forum/app';
 import FormModal from 'flarum/common/components/FormModal';
 import Button from 'flarum/common/components/Button';
-import Checkbox from 'flarum/common/components/Checkbox';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
-import icon from 'flarum/common/helpers/icon';
+import Icon from 'flarum/common/components/Icon';
 import { PLACEHOLDERS, fold } from '../placeholders';
 import MacroTextEditor from './MacroTextEditor';
 
@@ -27,6 +26,16 @@ function sortTags(tags) {
   return [...out, ...tags.filter((tag) => !out.includes(tag)).sort((a, b) => a.name().localeCompare(b.name()))];
 }
 
+/** A native checkbox, as core's own forms use. */
+function checkbox(checked, onchange, label, className = '') {
+  return (
+    <label className={'checkbox ' + className}>
+      <input type="checkbox" checked={checked} onchange={(e) => onchange(e.target.checked)} />
+      {label}
+    </label>
+  );
+}
+
 /**
  * Write or change a macro. The text is written in the forum's own editor, so
  * what is saved is what the composer will receive.
@@ -42,15 +51,10 @@ export default class MacroEditorModal extends FormModal {
 
     this.title_ = macro ? macro.title() : '';
     this.content_ = macro ? macro.content() : this.attrs.content || '';
-    this.isGlobal = macro ? macro.isGlobal() : !this.personal;
-    this.groupIds = new Set(
-      macro && macro.groups()
-        ? macro
-            .groups()
-            .filter(Boolean)
-            .map((group) => group.id())
-        : []
-    );
+    // Staff who may share macros usually mean to: shared is their default.
+    this.isGlobal = macro ? macro.isGlobal() : this.manage;
+    // A new shared macro starts out offered to Moderators (group 4), the usual audience.
+    this.groupIds = new Set(macro ? (macro.groups() || []).filter(Boolean).map((group) => group.id()) : ['4']);
     this.lock = macro ? !!macro.lock() : false;
     this.tagIds = new Set(macro ? (macro.tagIds() || []).map(String) : []);
     this.replaceTags = macro ? !!macro.replaceTags() : false;
@@ -100,24 +104,32 @@ export default class MacroEditorModal extends FormModal {
                 composer={this.host}
                 value={this.content_}
                 placeholder=""
-                onchange={(value) => (this.content_ = value)}
+                onchange={(value) => {
+                  // The editor's input events are not Mithril's: redraw only when Save's state can change.
+                  const was = !!this.content_.trim();
+                  this.content_ = value;
+                  if (was !== !!value.trim()) m.redraw();
+                }}
                 onsubmit={() => this.save()}
               />
             </div>
-            <p className="helpText CuecardEditor-placeholders">
-              {PLACEHOLDERS.map((name) => (
-                <span className="CuecardEditor-placeholder" title={app.translator.trans('ernestdefoe-cuecard.forum.placeholders.' + name, {}, true)}>
-                  <code>{'{' + name + '}'}</code> {app.translator.trans('ernestdefoe-cuecard.forum.placeholders.' + name)}
-                </span>
-              ))}
-            </p>
+            <details className="CuecardEditor-placeholders">
+              <summary>{t('placeholders_label')}</summary>
+              <ul>
+                {PLACEHOLDERS.map((name) => (
+                  <li>
+                    <code>{'{' + name + '}'}</code> {app.translator.trans('ernestdefoe-cuecard.forum.placeholders.' + name)}
+                  </li>
+                ))}
+              </ul>
+            </details>
           </div>
 
           {this.scopeFields()}
           {this.actionFields()}
 
           <div className="Form-group">
-            <Button type="submit" className="Button Button--primary" loading={this.loading} disabled={!this.title_.trim() || !this.content_.trim()}>
+            <Button type="submit" className="Button Button--primary" loading={this.loading} disabled={!this.ready()}>
               {t('save_button')}
             </Button>
           </div>
@@ -135,12 +147,14 @@ export default class MacroEditorModal extends FormModal {
         {choose ? (
           <div className="Form-group">
             <label>{t('scope_label')}</label>
-            {[false, true].map((global) => (
-              <label className="checkbox">
-                <input type="radio" name="cuecard-scope" checked={this.isGlobal === global} onchange={() => (this.isGlobal = global)} />
-                {t(global ? 'scope_global' : 'scope_personal')}
-              </label>
-            ))}
+            <div className="CuecardEditor-checks">
+              {[true, false].map((global) => (
+                <label className="checkbox">
+                  <input type="radio" name="cuecard-scope" checked={this.isGlobal === global} onchange={() => (this.isGlobal = global)} />
+                  {t(global ? 'scope_global' : 'scope_personal')}
+                </label>
+              ))}
+            </div>
           </div>
         ) : null}
 
@@ -151,11 +165,15 @@ export default class MacroEditorModal extends FormModal {
               {app.store
                 .all('groups')
                 .filter((group) => group.id() !== '2')
-                .map((group) => (
-                  <Checkbox state={this.groupIds.has(group.id())} onchange={(checked) => this.toggle(this.groupIds, group.id(), checked)}>
-                    {group.icon() ? icon(group.icon()) : null} {group.namePlural()}
-                  </Checkbox>
-                ))}
+                .map((group) =>
+                  checkbox(
+                    this.groupIds.has(group.id()),
+                    (checked) => this.toggle(this.groupIds, group.id(), checked),
+                    <>
+                      {group.icon() ? <Icon name={group.icon()} /> : null} {group.namePlural()}
+                    </>
+                  )
+                )}
             </div>
             <p className="helpText">{t('groups_help')}</p>
           </div>
@@ -176,17 +194,10 @@ export default class MacroEditorModal extends FormModal {
         <label>{t('actions_label')}</label>
         <p className="helpText">{t('actions_help')}</p>
 
-        {lock ? (
-          <Checkbox state={this.lock} onchange={(checked) => (this.lock = checked)}>
-            {t('lock_label')}
-          </Checkbox>
-        ) : null}
-
-        {best ? (
-          <Checkbox state={this.bestAnswer} onchange={(checked) => (this.bestAnswer = checked)}>
-            {t('best_answer_label')}
-          </Checkbox>
-        ) : null}
+        <div className="CuecardEditor-checks">
+          {lock ? checkbox(this.lock, (checked) => (this.lock = checked), t('lock_label')) : null}
+          {best ? checkbox(this.bestAnswer, (checked) => (this.bestAnswer = checked), t('best_answer_label')) : null}
+        </div>
 
         {tags ? this.tagFields() : null}
       </div>
@@ -214,23 +225,25 @@ export default class MacroEditorModal extends FormModal {
           />
         ) : null}
         <div className="CuecardEditor-tagList">
-          {shown.map((tag) => (
-            <Checkbox
-              className={tag.parent() ? 'CuecardEditor-tag--child' : ''}
-              state={this.tagIds.has(tag.id())}
-              onchange={(checked) => this.toggle(this.tagIds, tag.id(), checked)}
-            >
-              <span className="CuecardEditor-tagColor" style={{ background: tag.color() || 'var(--control-bg)' }} /> {tag.name()}
-            </Checkbox>
-          ))}
+          {shown.map((tag) =>
+            checkbox(
+              this.tagIds.has(tag.id()),
+              (checked) => this.toggle(this.tagIds, tag.id(), checked),
+              <>
+                <span className="CuecardEditor-tagColor" style={{ background: tag.color() || 'var(--control-bg)' }} /> {tag.name()}
+              </>,
+              tag.parent() ? 'CuecardEditor-tag--child' : ''
+            )
+          )}
         </div>
-        {this.tagIds.size ? (
-          <Checkbox state={this.replaceTags} onchange={(checked) => (this.replaceTags = checked)}>
-            {t('replace_tags_label')}
-          </Checkbox>
-        ) : null}
+        {this.tagIds.size ? checkbox(this.replaceTags, (checked) => (this.replaceTags = checked), t('replace_tags_label')) : null}
       </div>
     );
+  }
+
+  /** Title, text, and for a shared macro at least one group. */
+  ready() {
+    return this.title_.trim() && this.content_.trim() && !(this.isGlobal && this.manage && !this.groupIds.size);
   }
 
   toggle(set, id, checked) {
@@ -244,7 +257,7 @@ export default class MacroEditorModal extends FormModal {
   }
 
   save() {
-    if (this.loading || !this.title_.trim() || !this.content_.trim()) return;
+    if (this.loading || !this.ready()) return;
 
     const macro = this.attrs.macro || app.store.createRecord('cuecard-macros');
     const data = {

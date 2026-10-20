@@ -3,7 +3,7 @@ import Modal from 'flarum/common/components/Modal';
 import Button from 'flarum/common/components/Button';
 import LoadingIndicator from 'flarum/common/components/LoadingIndicator';
 import Tooltip from 'flarum/common/components/Tooltip';
-import icon from 'flarum/common/helpers/icon';
+import Icon from 'flarum/common/components/Icon';
 import classList from 'flarum/common/utils/classList';
 import { fill, fold, plainText } from '../placeholders';
 import { allowedActions, addActions } from '../actions';
@@ -78,10 +78,33 @@ export default class MacroPicker extends Modal {
     return { shared, yours, flat: [...shared, ...yours], total: all.length };
   }
 
+  /** The search box takes the keyboard at once: type, arrow, Enter. */
+  onready() {
+    this.$('.CuecardPicker-search input').trigger('focus');
+  }
+
   content() {
+    const search = (
+      <div className="Form-group CuecardPicker-search">
+        <input
+          className="FormControl"
+          type="search"
+          placeholder={t('search_placeholder')}
+          aria-label={t('search_placeholder')}
+          value={this.query}
+          oninput={(e) => {
+            this.query = e.target.value;
+            this.index = 0;
+          }}
+          onkeydown={this.onkeydown.bind(this)}
+        />
+      </div>
+    );
+
     if (!this.loaded) {
       return (
         <div className="Modal-body">
+          {search}
           <LoadingIndicator />
         </div>
       );
@@ -97,20 +120,7 @@ export default class MacroPicker extends Modal {
 
     return (
       <div className="Modal-body">
-        <div className="Form-group CuecardPicker-search">
-          <input
-            className="FormControl"
-            type="search"
-            placeholder={t('search_placeholder')}
-            aria-label={t('search_placeholder')}
-            value={this.query}
-            oninput={(e) => {
-              this.query = e.target.value;
-              this.index = 0;
-            }}
-            onkeydown={this.onkeydown.bind(this)}
-          />
-        </div>
+        {search}
 
         {flat.length ? (
           <div className="CuecardPicker-list" role="listbox" aria-label={t('title')}>
@@ -154,9 +164,9 @@ export default class MacroPicker extends Modal {
     const active = i === this.index;
     const badges = [];
 
-    if (macro.lock()) badges.push(icon('fas fa-lock'));
-    if ((macro.tagIds() || []).length) badges.push(icon('fas fa-tag'));
-    if (macro.bestAnswer()) badges.push(icon('fas fa-check'));
+    if (macro.lock()) badges.push(<Icon name="fas fa-lock" />);
+    if ((macro.tagIds() || []).length) badges.push(<Icon name="fas fa-tag" />);
+    if (macro.bestAnswer()) badges.push(<Icon name="fas fa-check" />);
 
     return (
       <li

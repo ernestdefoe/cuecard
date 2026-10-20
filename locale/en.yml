@@ -28,7 +28,6 @@ ernestdefoe-cuecard:
     picker:
       title: Macros
       search_placeholder: Search macros
-      loading: Loading macros…
       empty: No macros yet.
       no_results: No macros match your search.
       global_heading: Shared
@@ -39,13 +38,13 @@ ernestdefoe-cuecard:
       delete_button: Delete
       delete_confirm: "Delete the macro \"{title}\"? This cannot be undone."
       insert_hint: "↑ ↓ to choose, Enter to insert"
-      placeholders_hint: "Placeholders: {list}"
 
     editor:
       new_title: New macro
       edit_title: Edit macro
       title_label: Title
       content_label: Text
+      placeholders_label: Placeholders you can use
       scope_label: Who can use it
       scope_personal: Only me
       scope_global: Shared with staff and the groups below

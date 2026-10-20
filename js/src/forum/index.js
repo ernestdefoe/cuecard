@@ -3,7 +3,7 @@ import { extend } from 'flarum/common/extend';
 import TextEditor from 'flarum/common/components/TextEditor';
 import TextEditorButton from 'flarum/common/components/TextEditorButton';
 import Post from 'flarum/common/models/Post';
-import { actionChips, pendingActions, reportFailures } from './actions';
+import { actionChips, pendingActions, afterReply } from './actions';
 
 /** Whether this person has any reason to open the picker. */
 const canOpen = () => ['cuecardUse', 'cuecardSavePersonal', 'cuecardManage'].some((name) => app.forum.attribute(name));
@@ -50,8 +50,12 @@ app.initializers.add('ernestdefoe-cuecard', () => {
     if (actions) data.cuecardActions = actions;
   });
 
-  // The only place the saved reply comes back: tell the poster about any action that was refused.
+  // The only place the saved reply comes back to: follow up on its actions.
   extend(Post.prototype, 'save', function (promise, attributes) {
-    if (attributes && attributes.cuecardActions && promise && promise.then) promise.then(reportFailures, () => {});
+    if (attributes && attributes.cuecardActions && promise && promise.then)
+      promise.then(
+        (post) => afterReply(post, attributes.cuecardActions),
+        () => {}
+      );
   });
 });

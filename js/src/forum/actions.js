@@ -1,7 +1,7 @@
 import app from 'flarum/forum/app';
 import Tooltip from 'flarum/common/components/Tooltip';
 import Button from 'flarum/common/components/Button';
-import icon from 'flarum/common/helpers/icon';
+import Icon from 'flarum/common/components/Icon';
 
 /*
  * The actions of the macros inserted into a reply wait on the composer body's
@@ -67,7 +67,7 @@ function drop(attrs, key) {
 function chip(attrs, key, iconName, label) {
   return (
     <span className="CuecardChip">
-      {icon(iconName)}
+      <Icon name={iconName} />
       <span className="CuecardChip-label">{label}</span>
       <Tooltip text={app.translator.trans('ernestdefoe-cuecard.forum.composer.remove_action')}>
         <Button
@@ -109,11 +109,20 @@ export function actionChips(attrs) {
   );
 }
 
-/** After the reply is saved: say which actions were refused. */
-export function reportFailures(post) {
-  const failed = post && post.attribute('cuecardFailed');
+/**
+ * After the reply is saved: say which actions were refused, and bring the
+ * discussion's tags up to date when they were changed (the reply's response
+ * carries the discussion, but not its tags).
+ */
+export function afterReply(post, sent) {
+  const failed = (post && post.attribute('cuecardFailed')) || [];
+  const discussion = post && post.discussion();
 
-  if (!failed || !failed.length) return;
+  if (sent.tags && discussion && !failed.includes('tags')) {
+    app.store.find('discussions', discussion.id(), { include: 'tags' }).then(() => m.redraw());
+  }
+
+  if (!failed.length) return;
 
   const t = (key, params) => app.translator.trans('ernestdefoe-cuecard.forum.composer.' + key, params, true);
   const keys = { lock: 'failed_lock', tags: 'failed_tags', bestAnswer: 'failed_best_answer' };
