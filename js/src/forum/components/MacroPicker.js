@@ -78,7 +78,12 @@ export default class MacroPicker extends Modal {
     return { shared, yours, flat: [...shared, ...yours], total: all.length };
   }
 
-  /** The search box takes the keyboard at once: type, arrow, Enter. */
+  /** The search box takes the keyboard at once (and again once the modal has animated in): type, arrow, Enter. */
+  oncreate(vnode) {
+    super.oncreate(vnode);
+    this.onready();
+  }
+
   onready() {
     this.$('.CuecardPicker-search input').trigger('focus');
   }
@@ -112,7 +117,6 @@ export default class MacroPicker extends Modal {
 
     const { shared, yours, flat, total } = this.macros();
 
-    this.flat = flat;
     if (this.index >= flat.length) this.index = Math.max(0, flat.length - 1);
 
     const canSave = app.forum.attribute('cuecardSavePersonal') || app.forum.attribute('cuecardManage');
@@ -208,7 +212,9 @@ export default class MacroPicker extends Modal {
   }
 
   onkeydown(e) {
-    const count = (this.flat || []).length;
+    // From the query as it is now, not the last redraw: Enter can come before the next frame.
+    const flat = this.loaded ? this.macros().flat : [];
+    const count = flat.length;
 
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
@@ -217,7 +223,7 @@ export default class MacroPicker extends Modal {
       requestAnimationFrame(() => this.$('.CuecardPicker-item.active')[0]?.scrollIntoView({ block: 'nearest' }));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (count) this.insert(this.flat[this.index]);
+      if (count) this.insert(flat[Math.min(this.index, count - 1)]);
     }
   }
 

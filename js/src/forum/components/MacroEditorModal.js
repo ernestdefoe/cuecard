@@ -77,6 +77,19 @@ export default class MacroEditorModal extends FormModal {
     return 'CuecardEditor';
   }
 
+  /**
+   * novalidate: an editor's own toolbar can bring hidden required fields
+   * into the form (FoF Rich Text's link dialog does), and the browser would
+   * refuse to submit. The server validates the macro.
+   */
+  wrapper(children) {
+    return (
+      <form novalidate onsubmit={this.onsubmit.bind(this)}>
+        {children}
+      </form>
+    );
+  }
+
   title() {
     return this.attrs.macro ? t('edit_title') : t('new_title');
   }
@@ -129,7 +142,8 @@ export default class MacroEditorModal extends FormModal {
           {this.actionFields()}
 
           <div className="Form-group">
-            <Button type="submit" className="Button Button--primary" loading={this.loading} disabled={!this.ready()}>
+            {/* Not a submit button: an editor can put forms of its own (FoF Rich Text's link dialog) between it and ours. */}
+            <Button className="Button Button--primary CuecardEditor-save" loading={this.loading} disabled={!this.ready()} onclick={() => this.save()}>
               {t('save_button')}
             </Button>
           </div>
