@@ -232,7 +232,10 @@ export default class MacroPicker extends Modal {
 
     if (!editor) return;
 
-    const text = fill(macro.content(), placeholderValues(), this.format);
+    // A macro written before the forum moved to Scribe is still Markdown: Scribe
+    // translates it as text, so its placeholders must not be HTML-escaped.
+    const format = this.format === 'html' && !/^\s*</.test(macro.content()) ? 'plain' : this.format;
+    const text = fill(macro.content(), placeholderValues(), format);
 
     if (app.composer.bodyMatches('flarum/forum/components/ReplyComposer')) {
       const actions = allowedActions(macro, app.composer.body.attrs.discussion);
@@ -247,6 +250,9 @@ export default class MacroPicker extends Modal {
   }
 
   edit(macro = null, content = null) {
+    // Stacked over the picker. Flarum hands focus back to whatever had it when
+    // a modal opened, so the search box takes it first and gets it back after.
+    this.onready();
     app.modal.show(MacroEditorModal, { macro, content }, true);
   }
 

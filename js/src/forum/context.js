@@ -12,7 +12,10 @@ export function editorFormat() {
 
 /** The words of an HTML string, read without rendering it: DOMParser runs no scripts and loads nothing. */
 export function htmlText(html) {
-  return new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+  // A space after each block, so paragraphs and list items do not run together.
+  const spaced = String(html).replace(/<\/(p|li|h[1-6]|blockquote|pre|div|tr|td|th)>|<br\s*\/?>/gi, '$& ');
+
+  return new DOMParser().parseFromString(spaced, 'text/html').body.textContent || '';
 }
 
 /** Placeholder values for the composer as it is now. The discussion parts are empty when starting one. */
