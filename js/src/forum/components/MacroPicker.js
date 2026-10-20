@@ -220,7 +220,9 @@ export default class MacroPicker extends Modal {
       e.preventDefault();
       if (!count) return;
       this.index = (this.index + (e.key === 'ArrowDown' ? 1 : count - 1)) % count;
-      requestAnimationFrame(() => this.$('.CuecardPicker-item.active')[0]?.scrollIntoView({ block: 'nearest' }));
+      // Draw the move now, then bring the chosen row into view.
+      m.redraw.sync();
+      this.$('.CuecardPicker-item.active')[0]?.scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (count) this.insert(flat[Math.min(this.index, count - 1)]);

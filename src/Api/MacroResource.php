@@ -125,6 +125,13 @@ class MacroResource extends AbstractDatabaseResource
         return $model;
     }
 
+    /** Its group links go with it, also where the database enforces no foreign keys. */
+    public function deleting(object $model, OriginalContext $context): void
+    {
+        /** @var Macro $model */
+        $model->groups()->detach();
+    }
+
     /**
      * A global macro is offered to at least one group, so "nobody ticked"
      * never quietly means "everybody". Members is the everyone choice.

@@ -1,6 +1,5 @@
 ernestdefoe-cuecard:
   admin:
-    intro: "Macros are saved replies. They are written and managed in the forum, in the forum's own editor: open the composer and use the Cue Cards button to insert, save or edit one. A shared macro is offered to the groups chosen for it; a personal macro is seen only by the person who saved it."
     permissions:
       use: Insert global macros
       save_personal: Save personal macros

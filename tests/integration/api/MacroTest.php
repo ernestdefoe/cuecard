@@ -344,6 +344,13 @@ class MacroTest extends TestCase
     }
 
     #[Test]
+    public function deleting_a_shared_macro_removes_its_group_links(): void
+    {
+        $this->assertEquals(204, $this->call('DELETE', '/api/cuecard-macros/2', self::ADMIN)->getStatusCode());
+        $this->assertSame(0, $this->database()->table('cuecard_macro_groups')->where('macro_id', 2)->count());
+    }
+
+    #[Test]
     public function deleting_a_user_deletes_their_macros(): void
     {
         $this->call('DELETE', '/api/users/5', self::ADMIN);

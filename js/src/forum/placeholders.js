@@ -5,7 +5,7 @@
  * The values are text — names and titles the poster does not control — so
  * each is escaped for the format the editor speaks: HTML for Scribe, Markdown
  * where Markdown is on, nothing for plain BBCode. Mentions are the exception,
- * being syntax by design.
+ * being syntax by design (and present only when Mentions is on).
  */
 
 export const PLACEHOLDERS = [
@@ -44,6 +44,9 @@ export function fill(content, values, format) {
     if (!PLACEHOLDERS.includes(name)) return whole;
 
     const value = values[name];
+
+    // Without Mentions there is no mention syntax: the name stands in, as text.
+    if (name === 'mention' && (value === null || value === undefined)) return fill('{display_name}', values, format);
 
     if (value === null || value === undefined) return '';
 

@@ -54,3 +54,9 @@ test('plainText collapses whitespace and reads HTML through the parser it is giv
     'x'
   );
 });
+
+test('without Mentions, {mention} is the escaped display name', () => {
+  const noMention = { ...values, mention: null };
+  assert.equal(fill('{mention}', noMention, 'html'), 'Jo &lt;b&gt;Doe&lt;/b&gt;');
+  assert.equal(fill('{mention}', { mention: null }, 'plain'), '');
+});

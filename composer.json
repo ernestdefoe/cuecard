@@ -1,6 +1,6 @@
 {
     "name": "ernestdefoe/cuecard",
-    "description": "Saved replies for Flarum: global macros for staff (per-group), personal macros for anyone allowed, inserted from the composer with search and placeholders, optionally locking, tagging or marking the best answer as the reply posts.",
+    "description": "Saved replies for Flarum. Shared macros for chosen groups and personal ones, written in the forum's own editor and inserted from the composer's Cue Cards button with search and placeholders; a reply can also lock, tag or mark itself the best answer.",
     "keywords": ["flarum", "flarum-extension", "macros", "saved replies", "canned responses", "reply templates", "moderation"],
     "type": "flarum-extension",
     "license": "MIT",

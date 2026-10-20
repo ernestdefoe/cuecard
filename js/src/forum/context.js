@@ -30,7 +30,7 @@ export function placeholderValues() {
   return {
     username: starter && starter.username(),
     display_name: starter && starter.displayName(),
-    mention: starter ? (flarum.extensions['flarum-mentions'] ? `@"${mentionName}"#${starter.id()}` : starter.displayName()) : null,
+    mention: starter && flarum.extensions['flarum-mentions'] ? `@"${mentionName}"#${starter.id()}` : null,
     my_username: me && me.username(),
     my_display_name: me && me.displayName(),
     discussion_title: discussion && discussion.title(),
